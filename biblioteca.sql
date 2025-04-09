@@ -222,3 +222,44 @@ SELECT titulo, ejemplares
 FROM libros
 WHERE ejemplares = 2;
 
+# Añadir columna para el género del libro varchar(20) NOT NULL
+ALTER TABLE libros
+add COLUMN genero varchar(20) NOT NULL;
+
+describe libros;
+
+# Todos los libros son de género 'ficción' menos Python que es 'programación'
+select * from libros;
+
+UPDATE libros SET genero = "ficción";
+UPDATE libros SET genero = "programación" WHERE titulo = "Python";
+
+INSERT INTO libros(titulo, autor_nombre, autor_apellido, editorial, year_edition, ejemplares, genero) VALUES
+("El arte clásico", "Mary", "Beard", "Cátedra", 2020, 5, "arte"),
+("El arte moderno", "Giulio Claudio", "Argan", "Tusquets", 1980, 2, "arte"),
+("Historia de Roma", "Enrico", "Montanelli", "Alianza", 1985, 8, "historia");
+
+# Añadir 10 títulos más :
+# 	-- 2 de programación
+# 	-- 2 de poesía
+# 	-- 3 de historia
+# 	-- 3 de arte
+
+# Libros de los géneros "arte", "historia" y "programación"
+SELECT *
+FROM libros
+WHERE genero = "arte" or genero = "historia" or genero = "programación";
+
+SELECT *
+FROM libros
+WHERE genero IN ("arte", "historia", "programación");
+
+# Libros de los géneros que no son "arte", "historia" ni "programación"
+SELECT *
+FROM libros
+WHERE genero NOT IN ("arte", "historia", "programación");
+
+# Libros cuya cantidad de ejemplares está entre 2 y 4
+SELECT *
+FROM libros
+WHERE ejemplares between 2 and 4;
