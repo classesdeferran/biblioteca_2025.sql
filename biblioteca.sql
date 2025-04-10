@@ -293,7 +293,7 @@ ADD id_editorial int NOT NULL;
 
 select * from libros;
 
-
+# Formas de obtener información cruzada entre dos tablas
 SELECT libros.titulo, editoriales.nombre_editorial
 FROM libros, editoriales;
 
@@ -304,3 +304,64 @@ SELECT l.titulo, e.nombre_editorial
 FROM libros l, editoriales e
 WHERE l.editorial = e.nombre_editorial
 ;
+
+# Esta es la forma recomendada
+SELECT l.titulo, e.nombre_editorial, e.ciudad_editorial
+FROM libros l
+INNER JOIN editoriales e 
+ON l.id_editorial = e.id_editorial;
+
+UPDATE libros l, editoriales e
+SET l.id_editorial = e.id_editorial
+WHERE l.editorial = e.nombre_editorial;
+
+select * from libros;
+select * from editoriales;
+
+ALTER table libros
+DROP editorial;
+
+# Necesitamos una tabla para las poblaciones
+# poblacion varchar(50)
+# id_poblacion
+
+CREATE TABLE poblaciones (
+id_poblacion int NOT NULL auto_increment PRIMARY KEY,
+poblacion varchar(50) NOT NULL
+);
+
+# Que se vinculará a la tabla editoriales
+INSERT INTO poblaciones(poblacion)
+SELECT distinct ciudad_editorial
+FROM editoriales;
+
+select * FROM poblaciones;
+
+select * from editoriales;
+
+ALTER TABLE editoriales
+ADD column id_poblacion int NOT NULL;
+
+UPDATE editoriales e, poblaciones p
+SET e.id_poblacion = p.id_poblacion
+WHERE e.ciudad_editorial = p.poblacion;
+
+ALTER TABLE editoriales
+drop ciudad_editorial;
+
+SELECT l.titulo, e.nombre_editorial, p.poblacion
+FROM libros l
+JOIN editoriales e
+ON l.id_editorial = e.id_editorial
+JOIN poblaciones p
+ON e.id_poblacion = p.id_poblacion;
+
+# Vamos a incorporar los usuarios
+# nombre
+# apellido
+# fecha de nacimiento
+# numero de carnet
+# fecha_inscripcion
+
+ 
+
