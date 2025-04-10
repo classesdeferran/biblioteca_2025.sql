@@ -271,10 +271,36 @@ ciudad_editorial varchar(100) NULL
 );
 
 describe editoriales;
+select * FROM libros;
+
+
+insert into editoriales (nombre_editorial)
+SELECT distinct editorial FROM libros;
+
+select * FROM editoriales;
 
 # nombre_editorial ciudad_editorial
+
 # Cuando esté, llenar la tabla con las editoriales 
 # que aparecen en la tabla de libros
+
 # Añadir una columna en la tabla libros (id_editorial) con los ids
+ALTER TABLE libros
+ADD id_editorial int NOT NULL;
+
 # correspondientes a cada editorial de la tabla editoriales
 # Eliminar la columna editorial de la tabla libros
+
+select * from libros;
+
+
+SELECT libros.titulo, editoriales.nombre_editorial
+FROM libros, editoriales;
+
+SELECT l.titulo, e.nombre_editorial
+FROM libros as l, editoriales as e;
+
+SELECT l.titulo, e.nombre_editorial
+FROM libros l, editoriales e
+WHERE l.editorial = e.nombre_editorial
+;
