@@ -234,17 +234,16 @@ select * from libros;
 UPDATE libros SET genero = "ficción";
 UPDATE libros SET genero = "programación" WHERE titulo = "Python";
 
-INSERT INTO libros(titulo, autor_nombre, autor_apellido, editorial, year_edition, ejemplares, genero) VALUES
-("El arte clásico", "Mary", "Beard", "Cátedra", 2020, 5, "arte"),
-("El arte moderno", "Giulio Claudio", "Argan", "Tusquets", 1980, 2, "arte"),
-("Historia de Roma", "Enrico", "Montanelli", "Alianza", 1985, 8, "historia");
 
 # Añadir 10 títulos más :
 # 	-- 2 de programación
 # 	-- 2 de poesía
 # 	-- 3 de historia
 # 	-- 3 de arte
-
+INSERT INTO libros(titulo, autor_nombre, autor_apellido, editorial, year_edition, ejemplares, genero) VALUES
+("El arte clásico", "Mary", "Beard", "Cátedra", 2020, 5, "arte"),
+("El arte moderno", "Giulio Claudio", "Argan", "Tusquets", 1980, 2, "arte"),
+("Historia de Roma", "Enrico", "Montanelli", "Alianza", 1985, 8, "historia");
 # Libros de los géneros "arte", "historia" y "programación"
 SELECT *
 FROM libros
@@ -263,3 +262,19 @@ WHERE genero NOT IN ("arte", "historia", "programación");
 SELECT *
 FROM libros
 WHERE ejemplares between 2 and 4;
+
+# Necesitamos una tabla nueva para las editoriales
+CREATE TABLE editoriales (
+id_editorial int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+nombre_editorial varchar(100) NOT NULL,
+ciudad_editorial varchar(100) NULL
+);
+
+describe editoriales;
+
+# nombre_editorial ciudad_editorial
+# Cuando esté, llenar la tabla con las editoriales 
+# que aparecen en la tabla de libros
+# Añadir una columna en la tabla libros (id_editorial) con los ids
+# correspondientes a cada editorial de la tabla editoriales
+# Eliminar la columna editorial de la tabla libros
