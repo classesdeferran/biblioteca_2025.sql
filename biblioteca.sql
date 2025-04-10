@@ -357,11 +357,23 @@ JOIN poblaciones p
 ON e.id_poblacion = p.id_poblacion;
 
 # Vamos a incorporar los usuarios
-# nombre
-# apellido
+# id_usuario NOT NULL
+# nombre NOT NULL
+# apellido NOT NULL
 # fecha de nacimiento
-# numero de carnet
+# numero de carnet int UNIQUE NOT NULL
+SELECT FLOOR(RAND()*(99999999-10000000 +1))+10000000 as carnet;
 # fecha_inscripcion
+
+# Cambiar id de la tabla libros a id_libro
+
+# Vamos a crear otra tabla: prestamos
+# id_prestamo
+# id_usuario
+# id_libro
+# fecha_prestamo
+
+
 
  
 
