@@ -365,15 +365,96 @@ ON e.id_poblacion = p.id_poblacion;
 SELECT FLOOR(RAND()*(99999999-10000000 +1))+10000000 as carnet;
 # fecha_inscripcion
 
+CREATE TABLE usuarios (
+id_usuario int NOT NULL AUTO_INCREMENT,
+nombre_usuario varchar(50) NOT NULL,
+apellido varchar(100) NOT NULL,
+fecha_nacimiento date NULL,
+numero_carnet int NOT NULL UNIQUE,
+fecha_inscripcion timestamp DEFAULT current_timestamp,
+PRIMARY KEY (id_usuario)
+);
+
+INSERT INTO `usuarios` (`nombre_usuario`, `apellido`, `fecha_nacimiento`, `numero_carnet`) VALUES
+('Carlos', 'Pérez', '1990-03-15', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Ana', 'Gómez', '1985-07-22', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Luis', 'Martínez', '2000-12-01', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('María', 'Sánchez', '1995-05-09', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('José', 'Rodríguez', '1988-10-30', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Laura', 'Fernández', '1992-01-18', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Pedro', 'Álvarez', '1996-08-25', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Lucía', 'González', '1991-02-14', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Javier', 'Ramírez', '1989-11-03', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Paula', 'Díaz', '1993-06-17', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('David', 'Lopez', '1987-09-21', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Sandra', 'Martínez', '1998-04-04', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Juan', 'Hernández', '1994-12-28', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Raquel', 'Gómez', '1999-03-12', FLOOR(RAND()*(99999999-10000000 +1))+10000000),
+('Antonio', 'Torres', '1997-07-30', FLOOR(RAND()*(99999999-10000000 +1))+10000000);
+
 # Cambiar id de la tabla libros a id_libro
+ALTER TABLE libros
+RENAME COLUMN id to id_libro;
 
 # Vamos a crear otra tabla: prestamos
-# id_prestamo
+# id_prestamo PRIMARY KEY
 # id_usuario
 # id_libro
-# fecha_prestamo
+# fecha_prestamo 
+
+CREATE TABLE prestamos (
+id_prestamo int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+id_usuario int NOT NULL,
+id_libro int NOT NULL,
+fecha_prestamo timestamp DEFAULT current_timestamp
+);
+
+# Cambiar el nombre a una tabla
+ALTER TABLE prestamo RENAME prestamos;
+
+select * from editoriales;
+select * from libros;
+select * from prestamos;
+describe libros;
+
+
+insert into prestamos(id_usuario, id_libro) VALUES (1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (3, 1);
+
+# NATURAL JOIN sirve para hacer un INNER JOIN (o JOIN a secas)
+# cuando los ids de relación se llaman igual
+SELECT u.nombre_usuario, u.apellido_usuario, l.titulo, p.fecha_prestamo
+FROM usuarios u
+NATURAL JOIN prestamos p
+NATURAL JOIN libros l;
+
+# Selección de usuarios que no han tomado un libro prestado
+SELECT u.nombre_usuario, u.apellido_usuario, p.fecha_prestamo
+FROM usuarios u
+LEFT JOIN prestamos p
+ON u.id_usuario = p.id_usuario
+WHERE fecha_prestamo is null;
+
+alter table usuarios
+RENAME COLUMN apellido to apellido_usuario;
+
+SELECT u.nombre_usuario, u.apellido_usuario, COUNT(id_libro) as librosPrestados
+FROM usuarios u
+natural join prestamos p
+natural join libros l
+GROUP by u.id_usuario;
+
+# NECESITAMOS SABER...
+# Qué usuarios han tomado prestados libros de editoriales de Barcelona
+# Cuántos libros hay de editoriales que no son Barcelona
+# Cuántos libros tenemos que empiecen por "p"
+# Cuál es el libro más prestado
+# Qué usuarios han leído el libro más prestado
 
 
 
- 
+
+
+
+
+
 
