@@ -443,18 +443,163 @@ natural join prestamos p
 natural join libros l
 GROUP by u.id_usuario;
 
+# Préstamo de libros
+SELECT COUNT(p.id_libro) as prestamos
+FROM libros l
+NATURAL JOIN prestamos p
+GROUP BY p.id_libro
+ORDER BY prestamos DESC # de mayor a menor
+LIMIT 1;
+
+SELECT l.titulo, COUNT(p.id_libro) as prestamos
+FROM libros l
+NATURAL JOIN prestamos p
+GROUP BY p.id_libro
+HAVING prestamos = (SELECT COUNT(p.id_libro) as prestamos
+FROM libros l
+NATURAL JOIN prestamos p
+GROUP BY p.id_libro
+ORDER BY prestamos DESC
+LIMIT 1);
+
+
+
+
+
+
+
+insert into prestamos(id_libro, id_usuario) VALUES (1, 2);
+
 # NECESITAMOS SABER...
 # Qué usuarios han tomado prestados libros de editoriales de Barcelona
 # Cuántos libros hay de editoriales que no son Barcelona
 # Cuántos libros tenemos que empiecen por "p"
-# Cuál es el libro más prestado
+# Cuál es el libro o libros más prestado o prestados
+SELECT l.titulo
+FROM libros l
+NATURAL JOIN prestamos p
+GROUP BY p.id_libro
+HAVING COUNT(p.id_libro) = (SELECT COUNT(p.id_libro) as prestamos #obtenemos la cantidad mayor de libros prestados
+FROM libros l
+NATURAL JOIN prestamos p
+GROUP BY p.id_libro
+ORDER BY prestamos DESC
+LIMIT 1);
+
+
+
 # Qué usuarios han leído el libro más prestado
+# Cuáles son los libros más prestados
+SELECT p.id_libro
+FROM usuarios u
+NATURAL JOIN libros l
+NATURAL JOIN prestamos p
+GROUP BY p.id_libro
+HAVING COUNT(p.id_libro) = (SELECT COUNT(p.id_libro) as prestamos #obtenemos la cantidad mayor de libros prestados
+FROM libros l
+NATURAL JOIN prestamos p
+GROUP BY p.id_libro
+ORDER BY prestamos DESC
+LIMIT 1);
+
+SELECT distinct(u.numero_carnet), u.nombre_usuario, u.apellido_usuario
+FROM usuarios u
+natural join prestamos p
+WHERE p.id_libro in (SELECT p.id_libro
+FROM usuarios u
+NATURAL JOIN libros l
+NATURAL JOIN prestamos p
+GROUP BY p.id_libro
+HAVING COUNT(p.id_libro) = (SELECT COUNT(p.id_libro) as prestamos #obtenemos la cantidad mayor de libros prestados
+FROM libros l
+NATURAL JOIN prestamos p
+GROUP BY p.id_libro
+ORDER BY prestamos DESC
+LIMIT 1))
+
+
+
 
 # Borra el libro con id_libro = 6
 # Añade la editorial Mondadori, de Milán
 # Añade el libro "Ciudadanos", del autor Simon Schama, género "política", editado en 2022
 # Obtén el libro o libros de más reciente publicación
+# ¿Cuál es la fecha más reciente de publicación?
+
+
+
 # Obtén la editorial cuyos libros son los más prestados
+SELECT 
+    e.nombre_editorial,
+    COUNT(*) AS total_prestamos
+FROM 
+    prestamos p
+JOIN 
+    libros l ON p.id_libro = l.id_libro
+JOIN 
+    editoriales e ON l.id_editorial = e.id_editorial
+GROUP BY 
+    e.nombre_editorial
+ORDER BY 
+    total_prestamos DESC
+LIMIT 1; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT l.titulo, max(l.id_libro)
+FROM libros l
+natural join prestamos p
+GROUP BY l.id_libro
+HAVING count(l.id_libro) = 2;
+
+
+ALTER TABLE libros
+ADD CONSTRAINT fk_editorial
+FOREIGN KEY (id_editorial)
+REFERENCES editoriales(id_editorial)
+ON DELETE RESTRICT
+ON UPDATE RESTRICT;
+
+
+use biblioteca;
+
+# De los libros en préstamo cuál es el título, la editorial y la población
+# Crea la vista
+CREATE OR REPLACE VIEW vista AS 
+SELECT distinct l.titulo, e.nombre_editorial, p.poblacion
+FROM prestamos pr
+NATURAL JOIN libros l
+NATURAL JOIN editoriales e
+NATURAL JOIN poblaciones p;
+
+select * FROM vista;
+
+# El usuario con id = 4 toma prestado el libro con id = 4
+insert into prestamos(id_usuario, id_libro) VALUES (4,4);
+
+select l.titulo, p.fecha_prestamo, datediff(now(), p.fecha_prestamo) as dias_prestamo
+from libros l
+natural join prestamos p;
+
+
+
+# Elimina la vista
+DROP VIEW vista;
+
 
 
 
