@@ -450,6 +450,12 @@ GROUP by u.id_usuario;
 # Cuál es el libro más prestado
 # Qué usuarios han leído el libro más prestado
 
+# Borra el libro con id_libro = 6
+# Añade la editorial Mondadori, de Milán
+# Añade el libro "Ciudadanos", del autor Simon Schama, género "política", editado en 2022
+# Obtén el libro o libros de más reciente publicación
+# Obtén la editorial cuyos libros son los más prestados
+
 
 
 
