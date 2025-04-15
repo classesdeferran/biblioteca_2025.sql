@@ -560,6 +560,26 @@ INSERT INTO poblaciones(poblacion) VALUES ("Milán");
 set @id_poblacion = (SELECT id_poblacion FROM poblaciones WHERE poblacion = "Milán");
 INSERT INTO editoriales(nombre_editorial, id_poblacion) VALUES("Mondadori", @id_poblacion);
 
+delimiter $$
+create procedure insertEditorial(poblacion varchar(50), nombreEditorial varchar(100))
+begin
+# primer comprovarem si l'editorial ja existeix a la taula
+set @nombre_editorial = (SELECT nombre_editorial from editoriales where nombre_editorial = nombreEditorial);
+IF @nombre_editorial is null THEN
+	set @id_poblacion = (SELECT id_poblacion from poblaciones p where p.poblacion = poblacion);
+	IF @id_poblacion is null THEN
+		INSERT INTO poblaciones(poblacion) VALUES (poblacion);
+		set @id_poblacion = (SELECT id_poblacion from poblaciones p where p.poblacion = poblacion);
+	END IF;
+    insert into editoriales(nombre_editorial, id_poblacion) VALUES (nombreEditorial, @id_poblacion);
+ELSE
+	select "Ja existeix aquesta editorial";
+END IF;
+end $$
+delimiter ;
+
+call insertEditorial("Packt", "Birmingham");
+
 # Añade el libro "Ciudadanos", del autor Simon Schama, género "política", editado en 2022
 set @id_editorial = (SELECT id_editorial from editoriales where nombre_editorial = "Mondadori");
 INSERT INTO libros(titulo, autor_nombre, autor_apellido, year_edition, ejemplares, genero, id_editorial)
