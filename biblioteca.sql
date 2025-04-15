@@ -240,8 +240,8 @@ UPDATE libros SET genero = "programación" WHERE titulo = "Python";
 # 	-- 2 de poesía
 # 	-- 3 de historia
 # 	-- 3 de arte
-INSERT INTO libros(titulo, autor_nombre, autor_apellido, editorial, year_edition, ejemplares, genero) VALUES
-("El arte clásico", "Mary", "Beard", "Cátedra", 2020, 5, "arte"),
+INSERT INTO libros( titulo, autor_nombre, autor_apellido, editorial, year_edition, ejemplares, genero) VALUES
+( "El arte clásico", "Mary", "Beard", "Cátedra", 2020, 5, "arte"),
 ("El arte moderno", "Giulio Claudio", "Argan", "Tusquets", 1980, 2, "arte"),
 ("Historia de Roma", "Enrico", "Montanelli", "Alianza", 1985, 8, "historia");
 # Libros de los géneros "arte", "historia" y "programación"
@@ -480,145 +480,130 @@ HAVING count(l.id_libro) = 2;
 
 insert into prestamos(id_libro, id_usuario) VALUES (1, 2);
 
-# NECESITAMOS SABER...
+# EJERCICIOS: NECESITAMOS SABER...
 # Qué usuarios han tomado prestados libros de editoriales de Barcelona
-select distinct u.numero_carnet, u.nombre_usuario, u.apellido_usuario
-FROM usuarios u
-NATURAL join prestamos p
-NATURAL join libros l
-NATURAL join editoriales e
-natural join poblaciones po
-WHERE po.poblacion = "Barcelona";
+USE biblioteca;
+SELECT distinct u.numero_carnet, u.nombre_usuario, u.apellido_usuario
+FROM prestamos pr
+NATURAL JOIN usuarios u
+NATURAL JOIN editoriales e
+NATURAL JOIN poblaciones p
+where p.poblacion = "Barcelona";
+
 
 # Cuántos libros hay de editoriales que no son Barcelona
 SELECT COUNT(l.id_libro)
-from libros l
-NATURAL join editoriales e
-natural join poblaciones po
-WHERE po.poblacion not in ("Barcelona");
-
+FROM libros l
+natural join editoriales e
+natural join poblaciones p
+WHERE p.poblacion not in ("Barcelona");
 
 # Cuántos libros tenemos que empiecen por "p"
-SELECT COUNT(l.id_libro)
-from libros l
-where l.titulo like "e%";
+SELECT COUNT(id_libro)
+FROM libros
+WHERE titulo LIKE "e%";
 
 
 # Cuál es el libro o libros más prestado o prestados
+# Empezaremos por averiguar cuál es la cantidad de libros prestados máxima 
+SELECT COUNT(p.id_libro) as prestamos
+FROM prestamos p
+NATURAL JOIN libros l
+GROUP BY p.id_libro
+ORDER BY prestamos DESC # de mayor a menor
+LIMIT 1;
+
 SELECT l.titulo
-FROM libros l
-NATURAL JOIN prestamos p
+from prestamos p
+NATURAL join libros l
 GROUP BY p.id_libro
-HAVING COUNT(p.id_libro) = (SELECT COUNT(p.id_libro) as prestamos #obtenemos la cantidad mayor de libros prestados
-FROM libros l
-NATURAL JOIN prestamos p
+HAVING COUNT(p.id_libro) = ( # filtramos por el valor máximo de libros prestados
+SELECT COUNT(p.id_libro) as prestamos
+FROM prestamos p
+NATURAL JOIN libros l
 GROUP BY p.id_libro
-ORDER BY prestamos DESC
-LIMIT 1);
+ORDER BY prestamos DESC # de mayor a menor
+LIMIT 1
+);
 
 
 
 # Qué usuarios han leído el libro más prestado
 # Primero deberíamos saber cuáles son los libros más prestados
-SELECT p.id_libro
+SELECT distinct u.numero_carnet, u.nombre_usuario, u.apellido_usuario
 FROM usuarios u
-NATURAL JOIN libros l
-NATURAL JOIN prestamos p
-GROUP BY p.id_libro
-HAVING COUNT(p.id_libro) = (SELECT COUNT(p.id_libro) as prestamos #obtenemos la cantidad mayor de libros prestados
-FROM libros l
-NATURAL JOIN prestamos p
-GROUP BY p.id_libro
-ORDER BY prestamos DESC
-LIMIT 1);
+NATURAL join prestamos p
+NATURAL join libros l
+where p.id_libro in ( # cuales son los ids de libros prestados
+	SELECT l.id_libro
+	from prestamos p
+	NATURAL join libros l
+	GROUP BY p.id_libro
+	HAVING COUNT(p.id_libro) = ( # filtramos por el valor máximo de libros prestados
+		SELECT COUNT(p.id_libro) as prestamos
+		FROM prestamos p
+		NATURAL JOIN libros l
+		GROUP BY p.id_libro
+		ORDER BY prestamos DESC # de mayor a menor
+		LIMIT 1
+        )
+	);
 
-# la consulta será:
-SELECT distinct(u.numero_carnet), u.nombre_usuario, u.apellido_usuario
-FROM usuarios u
-natural join prestamos p
-WHERE p.id_libro in ( -- aquí ponemos la lista de libros más prestados
-SELECT p.id_libro
-FROM usuarios u
-NATURAL JOIN libros l
-NATURAL JOIN prestamos p
-GROUP BY p.id_libro
-HAVING COUNT(p.id_libro) = (SELECT COUNT(p.id_libro) as prestamos #obtenemos la cantidad mayor de libros prestados
-FROM libros l
-NATURAL JOIN prestamos p
-GROUP BY p.id_libro
-ORDER BY prestamos DESC
-LIMIT 1));
-
-
-
-USE biblioteca;
 # Borra el libro con id_libro = 6
-delete from libros where id_libro = 6;
+
 
 # Añade la editorial Mondadori, de Milán
-INSERT INTO poblaciones(poblacion) VALUES ("Milán");
-set @id_poblacion = (SELECT id_poblacion FROM poblaciones WHERE poblacion = "Milán");
-INSERT INTO editoriales(nombre_editorial, id_poblacion) VALUES("Mondadori", @id_poblacion);
+INSERT INTO poblaciones(poblacion) VALUES("Milán");
+SET @idPoblacion = (SELECT id_poblacion FROM poblaciones where poblacion = "Milán");
+select @idPoblacion;
+INSERT INTO editoriales(nombre_editorial, id_poblacion) VALUES("Mondadori", @idPoblacion); 
+select * FROM editoriales;
 
-delimiter $$
-create procedure insertEditorial(poblacion varchar(50), nombreEditorial varchar(100))
-begin
-# primer comprovarem si l'editorial ja existeix a la taula
-set @nombre_editorial = (SELECT nombre_editorial from editoriales where nombre_editorial = nombreEditorial);
-IF @nombre_editorial is null THEN
-	set @id_poblacion = (SELECT id_poblacion from poblaciones p where p.poblacion = poblacion);
-	IF @id_poblacion is null THEN
-		INSERT INTO poblaciones(poblacion) VALUES (poblacion);
-		set @id_poblacion = (SELECT id_poblacion from poblaciones p where p.poblacion = poblacion);
+# Creación de un PROCEDIMIENTO ALMACENADO
+DELIMITER $$
+CREATE PROCEDURE insertEditorial(poblacion varchar(50), nombreEditorial varchar(100))
+BEGIN
+	# Miramos si existe la editorial
+	SET @idEditorial = (SELECT id_editorial FROM editoriales e WHERE e.nombre_editorial = nombreEditorial);
+
+	IF @idEditorial is null THEN
+		# Miramos si existe la población
+		set @idPoblacion = (SELECT id_poblacion FROM poblaciones p WHERE p.poblacion = poblacion);
+        IF @idPoblacion is null THEN
+			INSERT INTO poblaciones(poblacion) VALUES (poblacion);
+            set @idPoblacion = (SELECT id_poblacion FROM poblaciones p WHERE p.poblacion = poblacion);
+        ELSE
+			select "La población ya existe";
+        END IF;
+        INSERT INTO editoriales(nombre_editorial, id_poblacion) VALUES (nombreEditorial, @idPoblacion);     
+    ELSE
+		select "La editorial ya existe";
 	END IF;
-    insert into editoriales(nombre_editorial, id_poblacion) VALUES (nombreEditorial, @id_poblacion);
-ELSE
-	select "Ja existeix aquesta editorial";
-END IF;
-end $$
-delimiter ;
+END $$
+DELIMITER ;
 
-call insertEditorial("Packt", "Birmingham");
+DROP PROCEDURE insertEditorial;
+
+CALL insertEditorial("París", "Oh la la");
+
+
 
 # Añade el libro "Ciudadanos", del autor Simon Schama, género "política", editado en 2022
-set @id_editorial = (SELECT id_editorial from editoriales where nombre_editorial = "Mondadori");
-INSERT INTO libros(titulo, autor_nombre, autor_apellido, year_edition, ejemplares, genero, id_editorial)
-VALUES ("Ciudadanos", "Simon", "Schama", 2022, 2, "política", @id_editorial);
+
 
 
 # Obtén el libro o libros de más reciente publicación
 # Primer cal saber quin és l'any més recent
-SELECT MAX(year_edition) FROM libros;
-# La consulta serà
-SELECT titulo FROM libros
-WHERE year_edition = (SELECT MAX(year_edition) FROM libros);
+
 
 
 
 # ¿Cuál es la fecha más reciente de publicación?
-SELECT MAX(year_edition) FROM libros;
+
 
 
 # Obtén la editorial cuyos libros son los más prestados
 # Primer saber quina és la quantitat més alta de prèstecs per editorial
-SELECT COUNT(l.id_editorial)
-from PRESTAMOS p
-NATURAL JOIN libros l
-GROUP BY l.id_editorial
-LIMIT 1;
-
-select e.nombre_editorial
-from editoriales e
-NATURAL JOIN libros l
-NATURAL JOIN prestamos p
-GROUP BY l.id_editorial
-having COUNT(l.id_editorial) = (SELECT COUNT(l.id_editorial)
-from PRESTAMOS p
-NATURAL JOIN libros l
-GROUP BY l.id_editorial
-LIMIT 1); 
-
-
 
 
 
