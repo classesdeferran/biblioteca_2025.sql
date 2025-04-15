@@ -420,6 +420,10 @@ describe libros;
 
 insert into prestamos(id_usuario, id_libro) VALUES (1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (3, 1);
 
+# ===========================================================================================
+# JOINS 
+# Sirven para relacionar tablas entre ellas
+
 # NATURAL JOIN sirve para hacer un INNER JOIN (o JOIN a secas)
 # cuando los ids de relación se llaman igual
 SELECT u.nombre_usuario, u.apellido_usuario, l.titulo, p.fecha_prestamo
@@ -463,17 +467,43 @@ ORDER BY prestamos DESC
 LIMIT 1);
 
 
+# ===========================================================================================
+# HAVING
+# Es un condicional para funciones de agragación (COUNT, MAX, AVG, etc)
 
-
-
+SELECT l.titulo, max(l.id_libro)
+FROM libros l
+natural join prestamos p
+GROUP BY l.id_libro
+HAVING count(l.id_libro) = 2;
 
 
 insert into prestamos(id_libro, id_usuario) VALUES (1, 2);
 
 # NECESITAMOS SABER...
 # Qué usuarios han tomado prestados libros de editoriales de Barcelona
+select distinct u.numero_carnet, u.nombre_usuario, u.apellido_usuario
+FROM usuarios u
+NATURAL join prestamos p
+NATURAL join libros l
+NATURAL join editoriales e
+natural join poblaciones po
+WHERE po.poblacion = "Barcelona";
+
 # Cuántos libros hay de editoriales que no son Barcelona
+SELECT COUNT(l.id_libro)
+from libros l
+NATURAL join editoriales e
+natural join poblaciones po
+WHERE po.poblacion not in ("Barcelona");
+
+
 # Cuántos libros tenemos que empiecen por "p"
+SELECT COUNT(l.id_libro)
+from libros l
+where l.titulo like "e%";
+
+
 # Cuál es el libro o libros más prestado o prestados
 SELECT l.titulo
 FROM libros l
@@ -489,7 +519,7 @@ LIMIT 1);
 
 
 # Qué usuarios han leído el libro más prestado
-# Cuáles son los libros más prestados
+# Primero deberíamos saber cuáles son los libros más prestados
 SELECT p.id_libro
 FROM usuarios u
 NATURAL JOIN libros l
@@ -502,10 +532,12 @@ GROUP BY p.id_libro
 ORDER BY prestamos DESC
 LIMIT 1);
 
+# la consulta será:
 SELECT distinct(u.numero_carnet), u.nombre_usuario, u.apellido_usuario
 FROM usuarios u
 natural join prestamos p
-WHERE p.id_libro in (SELECT p.id_libro
+WHERE p.id_libro in ( -- aquí ponemos la lista de libros más prestados
+SELECT p.id_libro
 FROM usuarios u
 NATURAL JOIN libros l
 NATURAL JOIN prestamos p
@@ -515,34 +547,56 @@ FROM libros l
 NATURAL JOIN prestamos p
 GROUP BY p.id_libro
 ORDER BY prestamos DESC
-LIMIT 1))
+LIMIT 1));
 
 
 
-
+USE biblioteca;
 # Borra el libro con id_libro = 6
-# Añade la editorial Mondadori, de Milán
-# Añade el libro "Ciudadanos", del autor Simon Schama, género "política", editado en 2022
-# Obtén el libro o libros de más reciente publicación
-# ¿Cuál es la fecha más reciente de publicación?
+delete from libros where id_libro = 6;
 
+# Añade la editorial Mondadori, de Milán
+INSERT INTO poblaciones(poblacion) VALUES ("Milán");
+set @id_poblacion = (SELECT id_poblacion FROM poblaciones WHERE poblacion = "Milán");
+INSERT INTO editoriales(nombre_editorial, id_poblacion) VALUES("Mondadori", @id_poblacion);
+
+# Añade el libro "Ciudadanos", del autor Simon Schama, género "política", editado en 2022
+set @id_editorial = (SELECT id_editorial from editoriales where nombre_editorial = "Mondadori");
+INSERT INTO libros(titulo, autor_nombre, autor_apellido, year_edition, ejemplares, genero, id_editorial)
+VALUES ("Ciudadanos", "Simon", "Schama", 2022, 2, "política", @id_editorial);
+
+
+# Obtén el libro o libros de más reciente publicación
+# Primer cal saber quin és l'any més recent
+SELECT MAX(year_edition) FROM libros;
+# La consulta serà
+SELECT titulo FROM libros
+WHERE year_edition = (SELECT MAX(year_edition) FROM libros);
+
+
+
+# ¿Cuál es la fecha más reciente de publicación?
+SELECT MAX(year_edition) FROM libros;
 
 
 # Obtén la editorial cuyos libros son los más prestados
-SELECT 
-    e.nombre_editorial,
-    COUNT(*) AS total_prestamos
-FROM 
-    prestamos p
-JOIN 
-    libros l ON p.id_libro = l.id_libro
-JOIN 
-    editoriales e ON l.id_editorial = e.id_editorial
-GROUP BY 
-    e.nombre_editorial
-ORDER BY 
-    total_prestamos DESC
-LIMIT 1; 
+# Primer saber quina és la quantitat més alta de prèstecs per editorial
+SELECT COUNT(l.id_editorial)
+from PRESTAMOS p
+NATURAL JOIN libros l
+GROUP BY l.id_editorial
+LIMIT 1;
+
+select e.nombre_editorial
+from editoriales e
+NATURAL JOIN libros l
+NATURAL JOIN prestamos p
+GROUP BY l.id_editorial
+having COUNT(l.id_editorial) = (SELECT COUNT(l.id_editorial)
+from PRESTAMOS p
+NATURAL JOIN libros l
+GROUP BY l.id_editorial
+LIMIT 1); 
 
 
 
@@ -560,11 +614,8 @@ LIMIT 1;
 
 
 
-SELECT l.titulo, max(l.id_libro)
-FROM libros l
-natural join prestamos p
-GROUP BY l.id_libro
-HAVING count(l.id_libro) = 2;
+
+
 
 
 ALTER TABLE libros
@@ -576,6 +627,9 @@ ON UPDATE RESTRICT;
 
 
 use biblioteca;
+
+# ===========================================================================================
+# VISTAS
 
 # De los libros en préstamo cuál es el título, la editorial y la población
 # Crea la vista
@@ -594,8 +648,6 @@ insert into prestamos(id_usuario, id_libro) VALUES (4,4);
 select l.titulo, p.fecha_prestamo, datediff(now(), p.fecha_prestamo) as dias_prestamo
 from libros l
 natural join prestamos p;
-
-
 
 # Elimina la vista
 DROP VIEW vista;
