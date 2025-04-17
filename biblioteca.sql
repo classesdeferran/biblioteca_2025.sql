@@ -793,3 +793,88 @@ DELIMITER ;
 CALL insertLibro("MySQL", "Steve", "Gates", 2022, "programación", 3, "ENI", "Cornellà");
 
 DROP PROCEDURE insertLibro;
+
+# Necesitamos saber cuántos libros se han prestado de cada editorial. 
+# Lo obtendremos de una función fnc_prestamos_editorial
+SELECT COUNT(p.id_libro) 
+FROM prestamos p 
+NATURAL JOIN libros l 
+NATURAL JOIN editoriales e
+WHERE e.id_editorial = 2;
+
+
+DELIMITER $$
+CREATE FUNCTION fnc_prestamos_editorial(idEditorial int)
+RETURNS int
+DETERMINISTIC
+BEGIN
+	-- Variable local para guardar el resultado de la consulta
+	DECLARE prestamos int;
+    -- Consulta para saber los libros prestados
+    SELECT COUNT(p.id_libro) INTO prestamos FROM prestamos p 
+	NATURAL JOIN libros l WHERE l.id_editorial = idEditorial;
+    -- Devolvemos la cantidad de libros
+    RETURN prestamos;    
+END $$
+DELIMITER ;
+
+
+SELECT nombre_editorial, fnc_prestamos_editorial(id_editorial) FROM editoriales;
+
+truncate prestamos;
+
+alter table prestamos
+add column fecha_devolucion_prevista datetime;
+
+alter table prestamos
+modify column fecha_prestamo timestamp default current_timestamp;
+
+DELIMITER //
+CREATE TRIGGER tr_fecha_devolucion
+BEFORE INSERT ON prestamos
+FOR EACH ROW
+FOLLOWS tr_verificacion_prestamo
+BEGIN	
+    SET new.fecha_devolucion_prevista = DATE_ADD(new.fecha_prestamo, INTERVAL 7 DAY);    
+END //
+DELIMITER ;
+
+drop trigger tr_fecha_devolucion;
+
+    select datediff(fecha_devolucion_prevista, current_date()) 
+    from prestamos 
+    where fecha_devolucion_prevista < current_date() 
+    and id_usuario = 1
+    and fecha_devolucion is null;
+
+DELIMITER //
+CREATE TRIGGER tr_verificacion_prestamo
+BEFORE INSERT ON prestamos
+FOR EACH ROW
+BEGIN	
+    DECLARE retraso int;
+    select datediff(fecha_devolucion_prevista, current_date()) INTO retraso
+    from prestamos 
+    where fecha_devolucion_prevista < current_date() 
+    and id_usuario = new.id_usuario
+    and fecha_devolucion is null;
+    
+    IF retraso < 0 THEN
+		SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = "Tienes un libro con retraso en la devolución";	
+	ELSE
+		SET new.fecha_devolucion_prevista = DATE_ADD(new.fecha_prestamo, INTERVAL 7 DAY);    
+	END IF;
+END //
+DELIMITER ;
+
+insert into prestamos (id_usuario, id_libro) VALUES (3,2);
+
+
+
+
+
+
+
+
+
