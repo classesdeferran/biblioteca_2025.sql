@@ -658,11 +658,138 @@ natural join prestamos p;
 DROP VIEW vista;
 
 
+ALTER TABLE libros
+ADD COLUMN disponibilidad int unsigned default 0;
+
+UPDATE libros set disponibilidad = ejemplares;
+
+
+# Un trigger automatiza una acción, antes de un insert, update o delete sobre una tabla
+# Este trigger controlará si tenemos suficiente disponibilidad de libros para realizar un préstamo
+
+-- Establecemos el delimitador
+DELIMITER //
+-- Creamos el trigger
+CREATE TRIGGER trg_disponibilidad
+-- BEFORE = antes de, AFTER = después de
+-- INSERT ON, UPDATE ON, DELETE ON tabla_a_controlar
+BEFORE INSERT ON prestamos
+-- Para cada fila de la tabla
+FOR EACH ROW
+BEGIN
+	-- Declaramos una variable local para almacenar la disponibilidad del libro 
+	DECLARE disponibilidad_libro int unsigned;
+    
+    -- Obtenemos la disponibilidad
+    SELECT disponibilidad INTO disponibilidad_libro
+    FROM libros
+    WHERE id_libro = new.id_libro;
+    
+    -- Si es menor o igual a cero debemos impedir que se realice el préstamo (insert)
+    IF disponibilidad_libro <= 0 THEN
+		SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = "No hay ejemplares disponibles para este libro";
+	ELSE 
+		-- Si hay disponibilidad se realiza el préstamo, pero hay que restar uno de 
+        -- los libros disponibles
+		UPDATE libros SET disponibilidad = disponibilidad - 1 WHERE id_libro = new.id_libro;        
+    END IF;
+
+END //
+DELIMITER ;
+
+-- Préstamo de un libro
+insert into prestamos(id_usuario, id_libro) VALUES(4, 3);
+
+DELIMITER //
+CREATE TRIGGER trg_control_prestamos
+BEFORE INSERT ON prestamos
+FOR EACH ROW
+FOLLOWS trg_disponibilidad
+BEGIN
+
+	-- Variable local para contar los préstamos
+    DECLARE prestamos_usuario int unsigned;
+    
+	-- Préstamos de un usuario
+	SELECT COUNT(id_usuario) INTO prestamos_usuario
+    FROM prestamos WHERE id_usuario = new.id_usuario;
+    
+    IF prestamos_usuario >= 2 THEN
+		SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = "Ya tienes dos libros en préstamo";	
+    END IF;
+    
+END //
+
+DELIMITER ;
 
 
 
+insert into prestamos(id_usuario, id_libro) VALUES(5, 4);
+
+DELIMITER //
+CREATE FUNCTION fnc_prestamos_usuario( f_id_usuario INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+	DECLARE num_prestamos INT UNSIGNED;
+    
+    -- Préstamos de un usuario
+	SELECT COUNT(id_usuario) INTO num_prestamos
+    FROM prestamos WHERE id_usuario = f_id_usuario;
+    -- Devuelve el número de préstamos
+    RETURN num_prestamos;
+END //
+DELIMITER ;
+
+SELECT nombre_usuario, apellido_usuario, fnc_prestamos_usuario(id_usuario) as "libros en préstamo"
+FROM usuarios;
+
+# Crea una función que devuelva cuantos usuarios tienen prestado un libro.
 
 
+use biblioteca;
 
+DELIMITER //
+CREATE PROCEDURE insertLibro(
+titulo varchar(100),
+autor_nombre varchar(50),
+autor_apellido varchar(100),
+year_edition year,
+genero varchar(20),
+ejemplares int,
+editorial varchar(100),
+poblacion varchar(50)
+)
+BEGIN
+	-- Primero hay que saber si el libro ya está en la tabla
+    -- Si ya existe el título con una editorial determinada
+    DECLARE idEditorial int unsigned;
+	DECLARE idLibro int unsigned;
+    -- SET @idLibro = (SELECT l.id_libro FROM libros l NATURAL JOIN editoriales e WHERE l.titulo = titulo AND e.nombre_editorial = editorial);
+    SELECT l.id_libro INTO idLibro
+    FROM libros l 
+    NATURAL JOIN editoriales e 
+    WHERE l.titulo = titulo AND e.nombre_editorial = editorial;
+    
+    IF idLibro IS NOT NULL THEN
+		SELECT CONCAT("El libro '", titulo, "' ya está en la base de datos") as mensaje;
+	ELSE
+		-- Verificar la población y la editorial
+        CALL insertEditorial(poblacion, editorial);
+        
+        SELECT id_editorial INTO idEditorial
+        FROM editoriales WHERE nombre_editorial = editorial;
+        
+        INSERT INTO libros(titulo, autor_nombre, autor_apellido, year_edition, ejemplares, disponibilidad, genero, id_editorial)
+        VALUES (titulo, autor_nombre, autor_apellido, year_edition, ejemplares, ejemplares, genero, idEditorial) ;
+        
+        SELECT CONCAT("El libro '", titulo, "' ha sido añadido correctamente") as mensaje;
+	END IF;    
+END //
+DELIMITER ;
 
+CALL insertLibro("MySQL", "Steve", "Gates", 2022, "programación", 3, "ENI", "Cornellà");
 
+DROP PROCEDURE insertLibro;
