@@ -97,6 +97,11 @@ ADD COLUMN tipo enum("moto", "coche", "bicicleta", "patinete") NOT NULL;
 -- Añadir vehículos a la tabla
 -- 'Fiat Panda', 5, 5, 4, 3, "manual", "1111AAA", 49.5, "coche"
 
+-- Añadir el tipo 'furgoneta' en la columna 'tipo'
+ALTER TABLE vehiculos
+MODIFY COLUMN tipo enum("moto", "coche", "bicicleta", "patinete", "furgoneta") NOT NULL;
+
+
 INSERT INTO vehiculos(
 nombre_modelo, 
 unidades_totales,
@@ -119,9 +124,6 @@ matricula,
 precioDia,
 tipo) VALUES ('Nissan Primastar', 2, 2, 9, 3, "automático", "1111BBB", 150.65, "furgoneta");
 
--- Añadir el tipo 'furgoneta' en la columna 'tipo'
-ALTER TABLE vehiculos
-MODIFY COLUMN tipo enum("moto", "coche", "bicicleta", "patinete", "furgoneta") NOT NULL;
 
 INSERT INTO vehiculos(
 nombre_modelo, 
