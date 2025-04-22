@@ -56,3 +56,17 @@ email varchar(100) NOT NULL
 -- matricula
 -- precioDia
 
+CREATE TABLE IF NOT EXISTS vehiculos (
+id_vehiculo int AUTO_INCREMENT NOT NULL PRIMARY KEY,
+nombre_modelo varchar(50) NOT NULL,
+unidades_totales int NOT NULL, 
+unidades_disponibles int NOT NULL, 
+personas smallint NOT NULL,
+puertas smallint NOT NULL,
+cambio enum("manual", "automático", "-"),
+matricula varchar(7) UNIQUE NOT NULL, 
+precioDia decimal(5,2)
+);
+
+
+
