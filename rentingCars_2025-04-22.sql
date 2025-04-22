@@ -224,6 +224,7 @@ sp_fecha_recogida timestamp
 BEGIN
 	-- 1 : obtener el id_cliente si existe
 	DECLARE idCliente int;
+    DECLARE disponibilidad int;
     DECLARE idVehiculo int;
     
     SELECT id_cliente INTO idCliente
@@ -239,18 +240,27 @@ BEGIN
 		FROM clientes
 		WHERE carnet_conducir = sp_carnet;
     END IF;
+		-- Obtener la disponibilidad del vehiculo
+        SELECT unidades_disponibles INTO disponibilidad
+        FROM vehiculos WHERE nombre_modelo = sp_modelo;
+        
+	IF disponibilidad = 0 THEN
+		SELECT "Vehiculo no disponible";
+    ELSE
 		-- Obtener el id_vehiculo
         SELECT id_vehiculo INTO idVehiculo FROM vehiculos WHERE nombre_modelo = sp_modelo;
         -- Insert para el alquiler
         INSERT INTO alquileres(id_cliente, id_vehiculo, fecha_recogida)
         VALUES(idCliente, idVehiculo, sp_fecha_recogida);
+        UPDATE vehiculos SET unidades_disponibles = unidades_disponibles -1 WHERE id_vehiculo = idVehiculo;
         -- Mensaje de confirmación
         SELECT "Alquiler realizado correctamente";
+    END IF;
 END //
 DELIMITER ;
 
 CALL alquiler_vehiculo ("Clark", "Kent", "6666", "666666666", "super@man.com", "Nissan Micra", "2024-12-25");
-CALL alquiler_vehiculo ("Clint", "Eastwood", "2222", "222222222", "clint@eastwood.com", "Fiat Panda", "2025-04-20");
+CALL alquiler_vehiculo ("Clint", "Eastwood", "2222", "222222222", "clint@eastwood.com", "Nissan Micra", "2025-04-20");
 
 
 
@@ -271,38 +281,3 @@ CALL alquiler_vehiculo ("Clint", "Eastwood", "2222", "222222222", "clint@eastwoo
 
 
 
-
-DELIMITER $$
-CREATE PROCEDURE alquiler_vehiculo(
-sp_nombre_cliente varchar(50),
-sp_apellido_cliente varchar(100),
-sp_carnet varchar(12),
-sp_telefono varchar(12),
-sp_email varchar(100),
-sp_modelo varchar(50),
-sp_fecha_alquiler timestamp
-)
-BEGIN
--- 1. Hay que saber si el cliente está ya registrado
-declare idCliente int;
-declare idVehiculo int;
-SELECT id_cliente INTO idCliente FROM clientes WHERE carnet_conducir = sp_carnet;
--- Si no está lo pondrá
-IF idCliente IS NULL THEN
-	INSERT INTO clientes(nombre_cliente, apellido_cliente, carnet_conducir, telefono, email) 
-	VALUES (sp_nombre_cliente,sp_apellido_cliente,sp_carnet,sp_telefono,sp_email);
-	SELECT id_cliente INTO idCliente FROM clientes WHERE carnet_conducir = sp_carnet;
-END IF;
--- Ahora obtendremos el id del modelo de vehículo
-SELECT id_vehiculo INTO idVehiculo FROM vehiculos WHERE nombre_modelo = sp_modelo;
--- Ya podemos hacer el insert
-INSERT INTO alquileres(id_cliente, id_vehiculo, fecha_recogida)
-VALUES (idCliente, idVehiculo, sp_fecha_alquiler);
-SELECT "Alquiler realizado correctamente";
-END $$
-DELIMITER ;
-
-DROP PROCEDURE alquiler_vehiculo;
-
-CALL alquiler_vehiculo("Clark", "Kent", "6666", "666666666", "super@man.com", "Nissan Micra", "2024-12-25");
-CALL alquiler_vehiculo("Clint", "Eastwood", "2222", "222222222", "clint@eastwood.com", "Fiat Panda", "2025-04-20");
