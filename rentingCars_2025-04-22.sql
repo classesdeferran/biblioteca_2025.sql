@@ -122,3 +122,18 @@ tipo) VALUES ('Nissan Primastar', 2, 2, 9, 3, "automático", "1111BBB", 150.65, 
 -- Añadir el tipo 'furgoneta' en la columna 'tipo'
 ALTER TABLE vehiculos
 MODIFY COLUMN tipo enum("moto", "coche", "bicicleta", "patinete", "furgoneta") NOT NULL;
+
+INSERT INTO vehiculos(
+nombre_modelo, 
+unidades_totales,
+unidades_disponibles,
+personas,
+puertas,
+cambio,
+matricula,
+precioDia,
+tipo) VALUES 
+('Nissan Micra', 3, 3, 4, 3, "manual", "1111CCC", 49.5, "coche"),
+('Piaggio Vespa', 5, 5, 2, 0, "manual", "1111DDD", 55.4, "moto"),
+('Piaggio Beverly', 1, 1, 2, 0, "manual", "1111EEE", 60, "moto")
+;
