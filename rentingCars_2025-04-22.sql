@@ -137,3 +137,24 @@ tipo) VALUES
 ('Piaggio Vespa', 5, 5, 2, 0, "manual", "1111DDD", 55.4, "moto"),
 ('Piaggio Beverly', 1, 1, 2, 0, "manual", "1111EEE", 60, "moto")
 ;
+
+
+-- Necesitamos saber cuántos vehículos tenemos en total
+-- lo mostraremos como 'total vehículos'
+
+SELECT SUM(unidades_totales) as 'total vehículos' FROM vehiculos;
+
+-- Necesitamos saber cuál o cuáles son los vehículos más económicos
+-- lo mostraremos como "vehículos económicos", con el precio
+
+SELECT nombre_modelo as "vehículos económicos", precioDia
+FROM vehiculos
+WHERE precioDia = (
+	SELECT MIN(precioDia) FROM vehiculos
+);
+
+-- En un día podríamos tener todos los vehículos alquilados.
+-- ¿Cuánto ingresaríamos?
+
+
+
