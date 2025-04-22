@@ -158,5 +158,22 @@ WHERE precioDia = (
 -- En un día podríamos tener todos los vehículos alquilados.
 -- ¿Cuánto ingresaríamos?
 
+SELECT SUM(unidades_totales * precioDia) as facturacion
+FROM vehiculos;
 
+-- Introducir clientes
+'Steve', 'Ballmer', "1111", "111111111", "steve@ballmer.com"
+'Clint', 'Eastwood', '2222', "222222222", "clint@eastwood.com"
+'Luciano', 'Pavarotti', '3333', '333333333', ''
+'Lionel', 'Messi', "4444", '444444444', ''
+'Lionel', 'Ritchie', '5555', '555555555', 'lionel@ritchie.cat'
+
+select * from clientes;
+
+INSERT INTO clientes(nombre_cliente, apellido_cliente, carnet_conducir, telefono, email) 
+VALUES ('Steve', 'Ballmer', "1111", "111111111", "steve@ballmer.com"),
+('Clint', 'Eastwood', '2222', "222222222", "clint@eastwood.com"),
+('Luciano', 'Pavarotti', '3333', '333333333', ''),
+('Lionel', 'Messi', "4444", '444444444', ''),
+('Lionel', 'Ritchie', '5555', '555555555', 'lionel@ritchie.cat');
 
