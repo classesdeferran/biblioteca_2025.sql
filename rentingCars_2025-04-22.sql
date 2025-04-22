@@ -162,11 +162,11 @@ SELECT SUM(unidades_totales * precioDia) as facturacion
 FROM vehiculos;
 
 -- Introducir clientes
-'Steve', 'Ballmer', "1111", "111111111", "steve@ballmer.com"
-'Clint', 'Eastwood', '2222', "222222222", "clint@eastwood.com"
-'Luciano', 'Pavarotti', '3333', '333333333', ''
-'Lionel', 'Messi', "4444", '444444444', ''
-'Lionel', 'Ritchie', '5555', '555555555', 'lionel@ritchie.cat'
+-- 'Steve', 'Ballmer', "1111", "111111111", "steve@ballmer.com"
+-- 'Clint', 'Eastwood', '2222', "222222222", "clint@eastwood.com"
+-- 'Luciano', 'Pavarotti', '3333', '333333333', ''
+-- 'Lionel', 'Messi', "4444", '444444444', ''
+-- 'Lionel', 'Ritchie', '5555', '555555555', 'lionel@ritchie.cat'
 
 select * from clientes;
 
@@ -177,3 +177,132 @@ VALUES ('Steve', 'Ballmer', "1111", "111111111", "steve@ballmer.com"),
 ('Lionel', 'Messi', "4444", '444444444', ''),
 ('Lionel', 'Ritchie', '5555', '555555555', 'lionel@ritchie.cat');
 
+-- Añadir este email --> lionel@antonella.ar
+UPDATE clientes 
+SET email = 'lionel@antonella.ar' 
+WHERE nombre_cliente = "Lionel" 
+AND apellido_cliente = "Messi";
+
+-- Queremos saber de qué cliente/s no tenemos el email
+SELECT nombre_cliente, apellido_cliente
+FROM clientes
+WHERE email = '';
+
+-- ¿Cuántos clientes se llaman Lionel?
+SELECT COUNT(id_cliente)
+FROM clientes
+WHERE nombre_cliente = "Lionel";
+
+-- ¿Cuántos clientes tenemos de cada nombre que esté en la tabla 'clientes'?
+-- con el nombre del cliente
+SELECT nombre_cliente, COUNT(nombre_cliente) as repeticiones
+FROM clientes
+GROUP by nombre_cliente
+ORDER BY repeticiones DESC;
+
+-- Para realizar un alquiler:
+-- nombre_cliente, apellido_cliente, carnet_conducir, telefono, email
+-- modelo, fecha_alquiler
+-- Si el cliente no figura en la base de datos hay que añadirlo
+-- Con un Procedimiento Almacenado --> alquiler_vehiculo
+
+-- ("Clark", "Kent", "6666", "666666666", "super@man.com", "Nissan Micra", "2024-12-25")
+-- ("Clint", "Eastwood", "2222", "222222222", "clint@eastwood.com", "Fiat Panda", "2025-04-20")
+
+DROP PROCEDURE alquiler_vehiculo;
+
+DELIMITER //
+CREATE PROCEDURE alquiler_vehiculo(
+sp_nombre_cliente varchar(50),
+sp_apellido_cliente varchar(100),
+sp_carnet varchar(12),
+sp_telefono varchar(12),
+sp_email varchar(100),
+sp_modelo varchar(50),
+sp_fecha_recogida timestamp  
+)
+BEGIN
+	-- 1 : obtener el id_cliente si existe
+	DECLARE idCliente int;
+    DECLARE idVehiculo int;
+    
+    SELECT id_cliente INTO idCliente
+    FROM clientes
+    WHERE carnet_conducir = sp_carnet;
+    
+    -- Si no existe, es que hay que añadir el cliente
+    IF idCliente IS NULL THEN
+		INSERT INTO clientes(nombre_cliente, apellido_cliente, carnet_conducir, telefono, email)
+        VALUES(sp_nombre_cliente,sp_apellido_cliente,sp_carnet,sp_telefono,sp_email);
+        -- Ahora que está en la tabla obtenemos su id_cliente
+        SELECT id_cliente INTO idCliente
+		FROM clientes
+		WHERE carnet_conducir = sp_carnet;
+    END IF;
+		-- Obtener el id_vehiculo
+        SELECT id_vehiculo INTO idVehiculo FROM vehiculos WHERE nombre_modelo = sp_modelo;
+        -- Insert para el alquiler
+        INSERT INTO alquileres(id_cliente, id_vehiculo, fecha_recogida)
+        VALUES(idCliente, idVehiculo, sp_fecha_recogida);
+        -- Mensaje de confirmación
+        SELECT "Alquiler realizado correctamente";
+END //
+DELIMITER ;
+
+CALL alquiler_vehiculo ("Clark", "Kent", "6666", "666666666", "super@man.com", "Nissan Micra", "2024-12-25");
+CALL alquiler_vehiculo ("Clint", "Eastwood", "2222", "222222222", "clint@eastwood.com", "Fiat Panda", "2025-04-20");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DELIMITER $$
+CREATE PROCEDURE alquiler_vehiculo(
+sp_nombre_cliente varchar(50),
+sp_apellido_cliente varchar(100),
+sp_carnet varchar(12),
+sp_telefono varchar(12),
+sp_email varchar(100),
+sp_modelo varchar(50),
+sp_fecha_alquiler timestamp
+)
+BEGIN
+-- 1. Hay que saber si el cliente está ya registrado
+declare idCliente int;
+declare idVehiculo int;
+SELECT id_cliente INTO idCliente FROM clientes WHERE carnet_conducir = sp_carnet;
+-- Si no está lo pondrá
+IF idCliente IS NULL THEN
+	INSERT INTO clientes(nombre_cliente, apellido_cliente, carnet_conducir, telefono, email) 
+	VALUES (sp_nombre_cliente,sp_apellido_cliente,sp_carnet,sp_telefono,sp_email);
+	SELECT id_cliente INTO idCliente FROM clientes WHERE carnet_conducir = sp_carnet;
+END IF;
+-- Ahora obtendremos el id del modelo de vehículo
+SELECT id_vehiculo INTO idVehiculo FROM vehiculos WHERE nombre_modelo = sp_modelo;
+-- Ya podemos hacer el insert
+INSERT INTO alquileres(id_cliente, id_vehiculo, fecha_recogida)
+VALUES (idCliente, idVehiculo, sp_fecha_alquiler);
+SELECT "Alquiler realizado correctamente";
+END $$
+DELIMITER ;
+
+DROP PROCEDURE alquiler_vehiculo;
+
+CALL alquiler_vehiculo("Clark", "Kent", "6666", "666666666", "super@man.com", "Nissan Micra", "2024-12-25");
+CALL alquiler_vehiculo("Clint", "Eastwood", "2222", "222222222", "clint@eastwood.com", "Fiat Panda", "2025-04-20");
