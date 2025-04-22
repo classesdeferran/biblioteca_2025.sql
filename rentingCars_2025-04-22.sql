@@ -68,5 +68,57 @@ matricula varchar(7) UNIQUE NOT NULL,
 precioDia decimal(5,2)
 );
 
+-- ON DELETE NO ACTION ON UPDATE NO ACTION
+-- Crear un 'constraint' (=restricción) entre la tabla clientes y alquileres
 
+ALTER TABLE alquileres
+ADD CONSTRAINT fk_alquileres_clientes
+FOREIGN KEY (id_cliente) 
+REFERENCES clientes(id_cliente)
+ON DELETE NO ACTION ON UPDATE NO ACTION,
+-- ADD CONSTRAINT fk_alquileres_clientes
+-- FOREIGN KEY (id_cliente) 
+-- REFERENCES clientes(id_cliente)
+-- ON DELETE NO ACTION ON UPDATE NO ACTION;
+;
 
+-- Crear un 'constraint' (=restricción) entre la tabla vehiculos y alquileres
+ALTER TABLE alquileres
+ADD CONSTRAINT fk_alquileres_vehiculos
+FOREIGN KEY (id_vehiculo) 
+REFERENCES vehiculos(id_vehiculo)
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- Añadir la columna 'tipo' en la tabla 'vehiculos'
+-- "moto", "coche", "bicicleta", "patinete"
+ALTER TABLE vehiculos
+ADD COLUMN tipo enum("moto", "coche", "bicicleta", "patinete") NOT NULL;
+
+-- Añadir vehículos a la tabla
+-- 'Fiat Panda', 5, 5, 4, 3, "manual", "1111AAA", 49.5, "coche"
+
+INSERT INTO vehiculos(
+nombre_modelo, 
+unidades_totales,
+unidades_disponibles,
+personas,
+puertas,
+cambio,
+matricula,
+precioDia,
+tipo) VALUES ('Fiat Panda', 5, 5, 4, 3, "manual", "1111AAA", 49.5, "coche");
+
+INSERT INTO vehiculos(
+nombre_modelo, 
+unidades_totales,
+unidades_disponibles,
+personas,
+puertas,
+cambio,
+matricula,
+precioDia,
+tipo) VALUES ('Nissan Primastar', 2, 2, 9, 3, "automático", "1111BBB", 150.65, "furgoneta");
+
+-- Añadir el tipo 'furgoneta' en la columna 'tipo'
+ALTER TABLE vehiculos
+MODIFY COLUMN tipo enum("moto", "coche", "bicicleta", "patinete", "furgoneta") NOT NULL;
